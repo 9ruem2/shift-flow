@@ -184,7 +184,7 @@ export default function ValidationReport({ reportData }) {
                         {file.output_filename}
                       </span>
                       <span className={isEven ? 'badge badge-even' : 'badge badge-odd'} style={{ fontSize: '0.68rem', padding: '1px 6px' }}>
-                        {week_info ? `${week_info.month_week_number}주차 (${file.file_type_label})` : file.file_type_label}
+                        {week_info ? `${week_info.week_number}주차 (${file.file_type_label})` : file.file_type_label}
                       </span>
                       {week_info && (
                         <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>

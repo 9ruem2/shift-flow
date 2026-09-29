@@ -48,7 +48,7 @@ class WeekCalculator:
                 week_label = "짝수" if is_even_week else "홀수"
                 week_full_label = "짝수주" if is_even_week else "홀수주"
                 
-                filename = f"{month}월_{week_label}_{month_week_idx}주차.xlsx"
+                filename = f"{month}월_{week_label}_{week_no}주차.xlsx"
                 
                 weeks.append({
                     "week_number": week_no,

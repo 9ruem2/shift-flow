@@ -21,8 +21,8 @@ export default function TargetMonthSelector({
           const data = await res.json();
           const weeks = data.weeks || [];
           setCalendarWeeks(weeks);
-          // Default: select all weeks in this month
-          setSelectedWeeks(weeks.map(w => w.month_week_number));
+          // Default: select all weeks in this month using year-based week_number
+          setSelectedWeeks(weeks.map(w => w.week_number));
         }
       } catch (err) {
         console.error('Failed to fetch weeks', err);
@@ -34,12 +34,12 @@ export default function TargetMonthSelector({
   const handlePrevYear = () => setTargetYear(prev => prev - 1);
   const handleNextYear = () => setTargetYear(prev => prev + 1);
 
-  const toggleWeek = (weekIdx) => {
+  const toggleWeek = (weekNo) => {
     setSelectedWeeks(prev => {
-      if (prev.includes(weekIdx)) {
-        return prev.filter(w => w !== weekIdx);
+      if (prev.includes(weekNo)) {
+        return prev.filter(w => w !== weekNo);
       } else {
-        return [...prev, weekIdx].sort((a, b) => a - b);
+        return [...prev, weekNo].sort((a, b) => a - b);
       }
     });
   };
@@ -48,7 +48,7 @@ export default function TargetMonthSelector({
     if (selectedWeeks.length === calendarWeeks.length) {
       setSelectedWeeks([]);
     } else {
-      setSelectedWeeks(calendarWeeks.map(w => w.month_week_number));
+      setSelectedWeeks(calendarWeeks.map(w => w.week_number));
     }
   };
 
@@ -187,12 +187,12 @@ export default function TargetMonthSelector({
       }}>
         {calendarWeeks.map(w => {
           const isEven = w.week_type === 'EVEN';
-          const isChecked = selectedWeeks.includes(w.month_week_number);
+          const isChecked = selectedWeeks.includes(w.week_number);
 
           return (
             <div
               key={w.week_number}
-              onClick={() => toggleWeek(w.month_week_number)}
+              onClick={() => toggleWeek(w.week_number)}
               style={{
                 background: isChecked
                   ? isEven
@@ -227,7 +227,7 @@ export default function TargetMonthSelector({
                     fontSize: '0.85rem',
                     color: isChecked ? '#FFFFFF' : 'var(--text-secondary)'
                   }}>
-                    {w.month_week_number}주차
+                    {w.week_number}주차
                   </span>
                   <span className={isEven ? 'badge badge-even' : 'badge badge-odd'} style={{ padding: '0 5px', fontSize: '0.65rem' }}>
                     {w.week_label}

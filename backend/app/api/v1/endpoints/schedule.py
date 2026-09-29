@@ -156,9 +156,9 @@ async def transform_schedules(
         if not integrity_report.all_passed:
             all_passed = False
 
-        # 파일명 규칙: 월_주_주차.xlsx (예: 10월_짝수_1주차.xlsx)
-        output_filename = f"{target_month}월_{w_label}_{month_w_idx}주차.xlsx"
-        download_key = f"{batch_id}_w{month_w_idx}_{w_type}"
+        # 파일명 규칙: 월_주_주차.xlsx (예: 10월_짝수_41주차.xlsx)
+        output_filename = f"{target_month}월_{w_label}_{year_w_idx}주차.xlsx"
+        download_key = f"{batch_id}_w{year_w_idx}_{w_type}"
 
         # 캐시에 저장
         file_cache_map[download_key] = {
