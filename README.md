@@ -1,0 +1,116 @@
+# ShiftFlow - 엑셀 일정 데이터 변환 및 무결성 검증기
+
+사용자가 원본 엑셀 파일 2개(짝수/홀수)를 웹 브라우저에서 직접 업로드하고 대상 연월을 선택하면, **기존 서식/스타일/빈 셀을 100% 보존**하면서 새 연월의 격주 순환 주차 일정으로 자동 치환하고 **pandas 기반 3중 무결성 검증**을 수행하는 풀스택 웹 애플리케이션입니다.
+
+---
+
+## 🚀 주요 기능 및 핵심 룰
+
+1. **사용자 직접 파일 업로드 (Drag & Drop)**
+   - 파일명에 `'짝수'` 또는 `'홀수'` 키워드가 포함된 원본 엑셀 파일을 자동 식별하여 슬롯에 배치합니다.
+2. **연초 기준 격주 순환 주차 룰 엔진 (일요일 ~ 토요일)**
+   - 모든 주는 **일요일 시작 ~ 토요일 종료**입니다.
+   - 연도 시작(1월 1일) 주차를 1주차(짝수주)로 시작하여 `[짝수주 → 홀수주 → 짝수주 → 홀수주]` 순서로 엄격히 교대합니다.
+   - 대상 연월을 선택하면 해당 월에 포함된 모든 주차와 짝/홀 속성을 실시간으로 계산합니다.
+3. **openpyxl 기반 서식 보존 날짜 치환**
+   - `'업무일'` 컬럼만 탐색하여 동일 요일의 대상 날짜로 1:1 치환합니다.
+   - 기존 폰트, 배경색, 테두리, 수식, 행 높이, 열 너비, 빈 셀을 원본 그대로 완벽 보존합니다.
+4. **pandas 기반 3중 무결성 검증 (Double-Checking)**
+   - **규격 일치 (Shape):** 원본과 생성 파일 간 행/열 크기 100% 일치 확인
+   - **데이터 불변성 (Invariance):** '업무일' 컬럼을 제외한 모든 셀 `equals()` 비교로 불변성 검증
+   - **날짜 적합성 (Date Validity):** 변환된 날짜가 대상 월 주차 범위 및 동일 요일에 맞게 배치되었는지 확인
+5. **즉시 다운로드**
+   - `사용자요청월_짝수스케쥴.xlsx` (예: `10월_짝수스케쥴.xlsx`)
+   - `사용자요청월_홀수스케쥴.xlsx` (예: `10월_홀수스케쥴.xlsx`)
+   - 검증 리포트 텍스트가 포함된 일괄 ZIP 압축 파일 다운로드
+
+---
+
+## 🏗️ 시스템 아키텍처
+
+```
+[사용자 브라우저 (React + Vite)]
+       │
+       │ 1. 원본 파일 2개 업로드 (Drag & Drop)
+       │    + 대상 연월 선택 (예: 2026-10)
+       ▼
+[FastAPI Backend Server]
+       │
+       ├── ① 파일명 파싱 (짝수/홀수 판별)
+       ├── ② 주차 룰 엔진 (연초 기준 격주 순환 계산: 일~토)
+       ├── ③ 날짜 치환 엔진 (openpyxl 기반, 스타일 완벽 보존)
+       ├── ④ 무결성 검증 엔진 (pandas Shape/Invariance/Date 3중 체크)
+       │
+       └── ⑤ Zip 파일 또는 개별 .xlsx 스트림 응답
+       │
+       ▼
+[결과 리포트 출력 + 엑셀 파일 즉시 다운로드]
+```
+
+---
+
+## 📁 프로젝트 구조
+
+```
+shift-flow/
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   │   └── v1/
+│   │   │       ├── endpoints/
+│   │   │       │   └── schedule.py    # 업로드, 변환, 다운로드 API
+│   │   │       └── router.py
+│   │   ├── core/
+│   │   │   ├── config.py              # 환경 설정
+│   │   │   └── exceptions.py          # 사용자 정의 예외
+│   │   ├── schemas/
+│   │   │   └── schedule.py            # Pydantic DTO
+│   │   ├── services/
+│   │   │   ├── week_calculator.py     # 격주(짝/홀) 순환 계산 모듈
+│   │   │   ├── excel_shifter.py       # openpyxl 기반 날짜 치환 로직
+│   │   │   └── validator.py           # pandas 기반 무결성 검증 로직
+│   │   └── main.py                    # FastAPI 진입점 & SPA 서빙
+│   ├── requirements.txt
+│   └── Dockerfile
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Header.jsx
+│   │   │   ├── TargetMonthSelector.jsx
+│   │   │   ├── FileDropzone.jsx
+│   │   │   ├── ValidationReport.jsx
+│   │   │   ├── SampleGenerator.jsx
+│   │   │   └── ArchitectureModal.jsx
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   ├── package.json
+│   └── vite.config.js
+└── README.md
+```
+
+---
+
+## 🏃 실행 방법
+
+### 1. 통합 실행 (FastAPI + 빌드된 UI)
+```bash
+# 백엔드 가상환경 활성화 및 서버 구동
+cd backend
+source venv/bin/activate
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+브라우저에서 **`http://127.0.0.1:8000`** 접속
+
+### 2. 프론트엔드 개발 모드 (Vite HMR)
+```bash
+# 터미널 1: 백엔드
+cd backend
+source venv/bin/activate
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+# 터미널 2: 프론트엔드
+cd frontend
+npm run dev
+```
+브라우저에서 **`http://localhost:5173`** 접속
