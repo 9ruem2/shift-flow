@@ -1,4 +1,5 @@
 import io
+import json
 import uuid
 import zipfile
 import unicodedata
@@ -15,10 +16,13 @@ from app.schemas.schedule import (
     DateMappingItem,
     IntegrityReport,
     MonthWeeksResponse,
-    WeekInfo
+    WeekInfo,
+    ContractDriver,
+    DriverSubstitutionRule,
+    SubstitutionRecord
 )
 from app.services.week_calculator import WeekCalculator
-from app.services.excel_shifter import ExcelShifter
+from app.services.excel_shifter import ExcelShifter, load_contract_drivers_map
 from app.services.validator import ScheduleValidator
 
 router = APIRouter()
@@ -38,6 +42,12 @@ def get_file_type_from_filename(filename: str) -> Optional[str]:
         return "ODD"
     return None
 
+@router.get("/drivers", response_model=List[ContractDriver])
+async def get_contract_drivers():
+    """등록된 용차 기사 마스터 목록 반환 (정적 JSON 기반)"""
+    drivers_map = load_contract_drivers_map()
+    return [ContractDriver(name=name, id=driver_id) for name, driver_id in drivers_map.items()]
+
 @router.get("/weeks", response_model=MonthWeeksResponse)
 async def get_month_weeks(
     year: int = Query(..., description="조회 연도 (예: 2026)"),
@@ -54,13 +64,28 @@ async def transform_schedules(
     target_year: int = Form(...),
     target_month: int = Form(...),
     file_types: Optional[List[str]] = Form(None),
-    selected_weeks: Optional[List[int]] = Form(None) # 선택된 주차 번호 목록 (month_week_number or week_number)
+    selected_weeks: Optional[List[int]] = Form(None), # 선택된 주차 번호 목록
+    substitutions: Optional[str] = Form(None)         # JSON 문자열 (옵셔널 용차 기사 치환 규칙 리스트)
 ):
     """
-    사용자가 선택한 주차별로 월_주_주차.xlsx 파일 생성 및 무결성 검증
+    1. 업무일 1:1 치환
+    2. [옵셔널] 업무일 및 기존 기사명 기준 용차 기사명 및 ID 치환
+    3. pandas 기반 3중 + 용차 치환 무결성 검증
     """
     if not files or len(files) == 0:
         raise HTTPException(status_code=400, detail="최소 1개 이상의 원본 엑셀 파일을 업로드해주세요.")
+
+    # 옵셔널 용차 기사 치환 규칙 파싱
+    parsed_substitution_rules: List[DriverSubstitutionRule] = []
+    if substitutions:
+        try:
+            sub_raw = json.loads(substitutions)
+            if isinstance(sub_raw, list):
+                for item in sub_raw:
+                    if isinstance(item, dict) and item.get("target_date") and item.get("original_driver_name") and item.get("new_driver_name"):
+                        parsed_substitution_rules.append(DriverSubstitutionRule(**item))
+        except Exception as e:
+            print(f"Warning: Failed to parse substitutions JSON: {e}")
 
     # 1. 업로드된 원본 파일들을 짝수/홀수 템플릿으로 매핑
     templates: Dict[str, Dict[str, Any]] = {}
@@ -110,7 +135,7 @@ async def transform_schedules(
     file_cache_map = {}
     all_passed = True
 
-    # 4. 각 주차별로 날짜 치환 및 개별 파일 생성
+    # 4. 각 주차별로 날짜 및 기사 치환 및 개별 파일 생성
     for week_info in target_weeks:
         w_type = week_info["week_type"]
         w_label = week_info["week_label"]
@@ -128,18 +153,19 @@ async def transform_schedules(
         orig_filename = template["filename"]
         orig_bytes = template["bytes"]
 
-        # 주차별 1:1 날짜 치환 실행
+        # 주차별 업무일 치환 및 [옵셔널] 용차 기사 치환 실행
         try:
-            trans_bytes, mappings, meta = ExcelShifter.transform_schedule_for_week(
+            trans_bytes, mappings, meta, applied_substitutions = ExcelShifter.transform_schedule_for_week(
                 file_bytes=orig_bytes,
-                target_week_info=week_info
+                target_week_info=week_info,
+                substitution_rules=parsed_substitution_rules
             )
         except (MissingWorkdayColumnError, FileParsingError) as e:
             raise HTTPException(status_code=400, detail=f"[{orig_filename}] {e.message}")
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"[{month_w_idx}주차 변환 오류] {str(e)}")
 
-        # 무결성 검증
+        # 무결성 검증 (업무일 + 용차 변경 제외 모든 셀 불변성 및 치환 적합성 검증)
         try:
             integrity_report = ScheduleValidator.validate_integrity(
                 orig_bytes=orig_bytes,
@@ -148,7 +174,8 @@ async def transform_schedules(
                 target_year=target_year,
                 target_month=target_month,
                 meta=meta,
-                mappings=mappings
+                mappings=mappings,
+                applied_substitutions=applied_substitutions
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"[{month_w_idx}주차 무결성 검증 오류] {str(e)}")
@@ -164,7 +191,8 @@ async def transform_schedules(
         file_cache_map[download_key] = {
             "filename": output_filename,
             "bytes": trans_bytes,
-            "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "substitutions": applied_substitutions
         }
 
         sample_items = [
@@ -189,6 +217,7 @@ async def transform_schedules(
                 download_key=download_key,
                 integrity=integrity_report,
                 sample_mappings=sample_items,
+                substitution_records=applied_substitutions,
                 week_info=WeekInfo(**week_info)
             )
         )
@@ -250,9 +279,14 @@ ShiftFlow 주차별 일정 변환 및 무결성 검증 완료 리포트
 [포함된 주차별 엑셀 파일 목록]
 """
         for key, item in cache_items.items():
-            report_text += f"- {item['filename']} ({len(item['bytes']):,} bytes)\n"
+            sub_records = item.get("substitutions", [])
+            sub_summary = f" (용차 교체: {len(sub_records)}건)" if sub_records else ""
+            report_text += f"- {item['filename']} ({len(item['bytes']):,} bytes){sub_summary}\n"
+            if sub_records:
+                for sub in sub_records:
+                    report_text += f"    * [업무일: {sub.target_date}] {sub.original_driver_name} -> {sub.new_driver_name} (ID: {sub.new_driver_id})\n"
 
-        report_text += "\n* 모든 주차 파일의 스타일, 수식, 빈 셀 및 서식이 원본 그대로 완벽 보존되었습니다.\n"
+        report_text += "\n* 모든 주차 파일의 업무일 및 요청된 용차 기사(이름, ID) 외 모든 셀의 서식, 수식, 빈 셀 및 데이터가 100% 무결성 검증을 통과하였습니다.\n"
         zf.writestr("무결성_검증_리포트.txt", report_text.encode("utf-8"))
 
     zip_bytes = zip_buffer.getvalue()
@@ -266,3 +300,4 @@ ShiftFlow 주차별 일정 변환 및 무결성 검증 완료 리포트
             "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
         }
     )
+

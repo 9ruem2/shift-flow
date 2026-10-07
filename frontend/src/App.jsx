@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Header from './components/Header';
 import TargetMonthSelector from './components/TargetMonthSelector';
 import FileDropzone from './components/FileDropzone';
+import DriverSubstitutionPanel from './components/DriverSubstitutionPanel';
 import ValidationReport from './components/ValidationReport';
 import ArchitectureModal from './components/ArchitectureModal';
 import { Play, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
@@ -15,6 +16,9 @@ export default function App() {
   
   const [evenFile, setEvenFile] = useState(null);
   const [oddFile, setOddFile] = useState(null);
+
+  // 옵셔널 용차 기사 교체 목록: [{ key, targetDate, originalDriverName, newDriverName, newDriverId }]
+  const [substitutions, setSubstitutions] = useState([]);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -54,6 +58,20 @@ export default function App() {
         formData.append('selected_weeks', w);
       });
 
+      // 유효한 용차 기사 교체 규칙만 필터링하여 전송
+      const validSubstitutions = substitutions
+        .filter(s => s.targetDate && s.originalDriverName.trim() && s.newDriverName)
+        .map(s => ({
+          target_date: s.targetDate.trim(),
+          original_driver_name: s.originalDriverName.trim(),
+          new_driver_name: s.newDriverName.trim(),
+          new_driver_id: s.newDriverId ? s.newDriverId.trim() : null
+        }));
+
+      if (validSubstitutions.length > 0) {
+        formData.append('substitutions', JSON.stringify(validSubstitutions));
+      }
+
       setTimeout(() => setCurrentStep(2), 300);
       setTimeout(() => setCurrentStep(3), 600);
 
@@ -81,6 +99,7 @@ export default function App() {
   const handleReset = () => {
     setEvenFile(null);
     setOddFile(null);
+    setSubstitutions([]);
     setReportData(null);
     setErrorMsg(null);
     setCurrentStep(0);
@@ -96,7 +115,15 @@ export default function App() {
         padding: '24px 20px 60px 20px',
         width: '100%'
       }}>
-        {/* 1. Target Month Selector */}
+        {/* 1. File Upload Dropzone */}
+        <FileDropzone
+          evenFile={evenFile}
+          setEvenFile={setEvenFile}
+          oddFile={oddFile}
+          setOddFile={setOddFile}
+        />
+
+        {/* 2. Target Month Selector */}
         <TargetMonthSelector
           targetYear={targetYear}
           setTargetYear={setTargetYear}
@@ -108,12 +135,11 @@ export default function App() {
           setSelectedWeeks={setSelectedWeeks}
         />
 
-        {/* 2. File Upload Dropzone */}
-        <FileDropzone
-          evenFile={evenFile}
-          setEvenFile={setEvenFile}
-          oddFile={oddFile}
-          setOddFile={setOddFile}
+        {/* 3. [옵셔널] 용차 기사 교체 설정 패널 (접었다 폈다 가능) */}
+        <DriverSubstitutionPanel
+          calendarWeeks={calendarWeeks}
+          substitutions={substitutions}
+          setSubstitutions={setSubstitutions}
         />
 
         {/* Error Alert */}
@@ -164,7 +190,7 @@ export default function App() {
               )}
             </button>
 
-            {(evenFile || oddFile || reportData) && (
+            {(evenFile || oddFile || reportData || substitutions.length > 0) && (
               <button
                 onClick={handleReset}
                 className="btn-secondary"
@@ -199,17 +225,17 @@ export default function App() {
               </span>
               <span>→</span>
               <span style={{ color: currentStep >= 3 ? '#34D399' : 'inherit', fontWeight: 600 }}>
-                ③ 날짜 치환
+                ③ 날짜 &amp; 용차 치환
               </span>
               <span>→</span>
               <span style={{ color: currentStep >= 4 ? '#34D399' : 'inherit', fontWeight: 600 }}>
-                ④ 무결성 검증
+                ④ 3중 무결성 검증
               </span>
             </div>
           )}
         </div>
 
-        {/* 3. Validation Report & Download Section */}
+        {/* 4. Validation Report & Download Section */}
         {reportData && <ValidationReport reportData={reportData} />}
       </main>
 
@@ -221,3 +247,4 @@ export default function App() {
     </div>
   );
 }
+

@@ -1,0 +1,18 @@
+{
+  "name": "shift-flow",
+  "version": "1.0.0",
+  "description": "ShiftFlow - 엑셀 일정 데이터 변환 및 무결성 검증기",
+  "scripts": {
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue.bold,bgGreen.bold\" \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && source venv/bin/activate && uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload",
+    "frontend": "npm run dev:frontend",
+    "backend": "npm run dev:backend",
+    "start": "cd backend && source venv/bin/activate && uvicorn app.main:app --host 0.0.0.0 --port 8000",
+    "build": "cd frontend && npm run build",
+    "install:all": "cd frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

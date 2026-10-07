@@ -93,24 +93,32 @@ shift-flow/
 
 ## 🏃 실행 방법
 
-### 1. 통합 실행 (FastAPI + 빌드된 UI)
+### 1. 간편 개발 모드 (프론트엔드 + 백엔드 동시 실행, 추천)
+루트 경로에서 명령어 하나로 백엔드와 프론트엔드를 동시에 실행합니다:
 ```bash
-# 백엔드 가상환경 활성화 및 서버 구동
-cd backend
-source venv/bin/activate
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-브라우저에서 **`http://127.0.0.1:8000`** 접속
-
-### 2. 프론트엔드 개발 모드 (Vite HMR)
-```bash
-# 터미널 1: 백엔드
-cd backend
-source venv/bin/activate
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-
-# 터미널 2: 프론트엔드
-cd frontend
 npm run dev
+# 또는 yarn dev
 ```
-브라우저에서 **`http://localhost:5173`** 접속
+- 프론트엔드 (Vite): **`http://localhost:5173`**
+- 백엔드 API (FastAPI): **`http://127.0.0.1:8000`**
+
+---
+
+### 2. 개별 실행
+```bash
+# 백엔드만 실행
+npm run backend
+# 또는 npm run dev:backend
+
+# 프론트엔드만 실행
+npm run frontend
+# 또는 npm run dev:frontend
+```
+
+---
+
+### 3. 통합 서버 실행 (빌드된 UI 포함)
+```bash
+npm start
+```
+- 브라우저에서 **`http://127.0.0.1:8000`** 접속

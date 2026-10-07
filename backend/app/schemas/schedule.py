@@ -1,5 +1,23 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
+
+class ContractDriver(BaseModel):
+    name: str
+    id: str
+
+class DriverSubstitutionRule(BaseModel):
+    target_date: str                 # YYYY-MM-DD
+    original_driver_name: str        # 기존 기사명
+    new_driver_name: str             # 바꿀 용차 기사명
+    new_driver_id: Optional[str] = None # 용차 기사 ID (생략 시 마스터에서 자동 조회)
+
+class SubstitutionRecord(BaseModel):
+    target_date: str
+    original_driver_name: str
+    new_driver_name: str
+    new_driver_id: str
+    row_index: int
+    applied: bool = True
 
 class WeekInfo(BaseModel):
     week_number: int         # 연간 주차 (예: 41)
@@ -20,12 +38,15 @@ class DateMappingItem(BaseModel):
 
 class IntegrityReport(BaseModel):
     dimension_match: bool
-    dimension_original: tuple[int, int]
-    dimension_transformed: tuple[int, int]
+    dimension_original: Tuple[int, int]
+    dimension_transformed: Tuple[int, int]
     invariance_match: bool
     invariance_difference_count: int
     date_validity_match: bool
     date_validity_message: str
+    substitution_match: bool = True
+    substitution_count: int = 0
+    substitution_message: str = ""
     workday_column_name: str
     workday_count: int
     all_passed: bool
@@ -41,6 +62,7 @@ class FileTransformResult(BaseModel):
     download_key: str
     integrity: IntegrityReport
     sample_mappings: List[DateMappingItem] = []
+    substitution_records: List[SubstitutionRecord] = []
     week_info: WeekInfo
 
 class TransformResponse(BaseModel):
@@ -58,3 +80,4 @@ class MonthWeeksResponse(BaseModel):
     year: int
     month: int
     weeks: List[WeekInfo]
+
