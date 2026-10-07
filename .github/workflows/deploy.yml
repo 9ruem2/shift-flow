@@ -55,8 +55,14 @@ jobs:
       # 배포 자동화: Render / Webhook 연동 (시크릿 등록 시 자동 트리거)
       # =========================================================================
       - name: Trigger Cloud Deploy Hook (Render / Webhook)
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          echo "🚀 Triggering automated deployment..."
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          if [ -n "$DEPLOY_HOOK_URL" ]; then
+            echo "🚀 Triggering automated deployment..."
+            curl -s -X POST "$DEPLOY_HOOK_URL"
+          else
+            echo "ℹ️ No RENDER_DEPLOY_HOOK_URL secret configured. Skipping cloud deploy hook."
+          fi
+
 
