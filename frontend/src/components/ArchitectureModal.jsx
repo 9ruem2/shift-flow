@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Layers, Cpu, ShieldCheck, CheckCircle2, FileSpreadsheet, ArrowDown } from 'lucide-react';
+import { X, Layers, Cpu, ShieldCheck, CheckCircle2, FileSpreadsheet, ArrowDown, UserCheck, Calendar } from 'lucide-react';
 
 export default function ArchitectureModal({ isOpen, onClose }) {
   if (!isOpen) return null;
@@ -20,7 +20,7 @@ export default function ArchitectureModal({ isOpen, onClose }) {
       padding: '20px'
     }}>
       <div className="glass-panel animate-slide-down" style={{
-        maxWidth: '720px',
+        maxWidth: '740px',
         width: '100%',
         maxHeight: '90vh',
         overflowY: 'auto',
@@ -53,12 +53,13 @@ export default function ArchitectureModal({ isOpen, onClose }) {
           </h2>
         </div>
 
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>
-          수작업 일정표 작성 시 발생하는 날짜 오기입과 서식 깨짐을 방지하기 위해 5단계 파이프라인과 3중 무결성 검증을 거칩니다.
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: 1.5 }}>
+          수작업 일정표 작성 시 발생하는 날짜 오기입, 기사 배정 실수 및 서식 깨짐을 방지하기 위해 <b>5단계 파이프라인</b>과 <b>4대 정밀 무결성 검증 엔진</b>을 거칩니다.
         </p>
 
         {/* 5-Step Pipeline Flow */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+          {/* Step 1 */}
           <div style={{
             background: 'rgba(255, 255, 255, 0.03)',
             border: '1px solid var(--border-subtle)',
@@ -82,13 +83,16 @@ export default function ArchitectureModal({ isOpen, onClose }) {
               flexShrink: 0
             }}>1</span>
             <div>
-              <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#FFFFFF' }}>파일명 파싱 및 짝/홀 식별</h4>
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                업로드된 파일명에서 '짝수', '홀수' 키워드를 감지하여 스케쥴의 속성을 판별합니다.
+              <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#FFFFFF' }}>
+                파일명 파싱 및 짝/홀 템플릿 자동 식별
+              </h4>
+              <p style={{ margin: '3px 0 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                업로드된 파일명에서 '짝수', '홀수' 키워드를 감지(macOS 한글 자모 분리 완벽 대응)하여 짝/홀수 템플릿으로 슬롯에 자동 매핑합니다.
               </p>
             </div>
           </div>
 
+          {/* Step 2 */}
           <div style={{
             background: 'rgba(255, 255, 255, 0.03)',
             border: '1px solid var(--border-subtle)',
@@ -112,16 +116,19 @@ export default function ArchitectureModal({ isOpen, onClose }) {
               flexShrink: 0
             }}>2</span>
             <div>
-              <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#FFFFFF' }}>주차 룰 엔진 (일~토 기준 격주 순환)</h4>
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                연초(1월 1일) 주차를 1주차(짝수주)로 시작하여 [짝수주 → 홀수주] 순서로 엄격히 교대 계산합니다.
+              <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#FFFFFF' }}>
+                연초 기준 격주 순환 주차 룰 엔진 (일요일 ~ 토요일)
+              </h4>
+              <p style={{ margin: '3px 0 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                모든 주차는 일요일 시작 ~ 토요일 종료 기준이며, 연도 시작(1월 1일) 주차를 1주차(짝수주)로 시작하여 <code>[짝수주 → 홀수주]</code> 순서로 엄격히 교대 계산합니다.
               </p>
             </div>
           </div>
 
+          {/* Step 3 */}
           <div style={{
             background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid rgba(168, 85, 247, 0.3)',
             borderRadius: 'var(--radius-md)',
             padding: '14px 18px',
             display: 'flex',
@@ -132,7 +139,7 @@ export default function ArchitectureModal({ isOpen, onClose }) {
               width: '26px',
               height: '26px',
               borderRadius: '50%',
-              background: 'var(--accent-primary)',
+              background: 'linear-gradient(135deg, #6366F1, #A855F7)',
               color: 'white',
               display: 'flex',
               alignItems: 'center',
@@ -142,13 +149,24 @@ export default function ArchitectureModal({ isOpen, onClose }) {
               flexShrink: 0
             }}>3</span>
             <div>
-              <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#FFFFFF' }}>openpyxl 스타일 보존 날짜 치환</h4>
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                '업무일' 컬럼만 탐색하여 동일 요일의 대상 날짜로 1:1 치환하며, 셀 서식/폰트/배경색/빈 셀을 완벽 보존합니다.
-              </p>
+              <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>업무일 우선 치환 + [옵션] 용차 기사(이름/ID) 치환 엔진</span>
+              </h4>
+              <div style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                <p style={{ margin: '0 0 3px 0' }}>
+                  • <b>1단계(업무일 우선 치환):</b> '업무일' 컬럼을 탐색하여 동일 요일의 대상 날짜로 1:1 치환합니다.
+                </p>
+                <p style={{ margin: '0 0 3px 0' }}>
+                  • <b>2단계(용차 기사 &amp; ID 치환):</b> 변경된 새 업무일 기준 기존 기사명을 찾아 용차 기사명 및 정적 마스터(<code>contract_drivers.json</code>)의 고유 ID로 치환합니다.
+                </p>
+                <p style={{ margin: 0, color: 'var(--accent-emerald)' }}>
+                  ✓ 셀 폰트, 배경색, 테두리, 수식, 행 높이, 열 너비, 빈 셀 서식 100% 보존
+                </p>
+              </div>
             </div>
           </div>
 
+          {/* Step 4 */}
           <div style={{
             background: 'rgba(255, 255, 255, 0.03)',
             border: '1px solid var(--border-subtle)',
@@ -172,13 +190,27 @@ export default function ArchitectureModal({ isOpen, onClose }) {
               flexShrink: 0
             }}>4</span>
             <div>
-              <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#FFFFFF' }}>pandas 3중 무결성 검증 엔진</h4>
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                1) Shape(행/열) 일치, 2) '업무일' 제외 모든 컬럼 <code>equals()</code> 불변성 검증, 3) 대상 날짜 및 요일 유효성 검증.
-              </p>
+              <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#FFFFFF' }}>
+                pandas 기반 4대 정밀 무결성 검증 엔진
+              </h4>
+              <div style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                <p style={{ margin: '0 0 2px 0' }}>
+                  1) <b>규격 일치 (Shape):</b> 원본과 변환 파일 간 행/열 크기 100% 일치
+                </p>
+                <p style={{ margin: '0 0 2px 0' }}>
+                  2) <b>데이터 불변성 (Invariance):</b> 업무일 및 지정된 용차 치환(이름/ID) 외 모든 셀 100% 원본 불변
+                </p>
+                <p style={{ margin: '0 0 2px 0' }}>
+                  3) <b>날짜 적합성 (Date Validity):</b> 대상 주차 유효 범위 및 동일 요일 배치 검증
+                </p>
+                <p style={{ margin: 0 }}>
+                  4) <b>용차 치환 적합성 (Substitution Validity):</b> 지정 행의 기사명 및 ID 마스터 일치 검증
+                </p>
+              </div>
             </div>
           </div>
 
+          {/* Step 5 */}
           <div style={{
             background: 'rgba(255, 255, 255, 0.03)',
             border: '1px solid var(--border-subtle)',
@@ -202,9 +234,11 @@ export default function ArchitectureModal({ isOpen, onClose }) {
               flexShrink: 0
             }}>5</span>
             <div>
-              <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#FFFFFF' }}>즉시 다운로드 스트림 응답</h4>
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                <code>사용자요청월_짝수스케쥴.xlsx</code> 및 ZIP 파일 스트림으로 원본 서식을 담아 배포합니다.
+              <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#FFFFFF' }}>
+                주차별 엑셀 파일 및 일괄 ZIP 배포
+              </h4>
+              <p style={{ margin: '3px 0 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                <code>{'{월}'}월_{'{짝수/홀수}'}_{'{연간주차}'}주차.xlsx</code> 형식으로 개별 다운로드 및 무결성 검증 리포트 텍스트가 포함된 일괄 ZIP 압축 다운로드를 제공합니다.
               </p>
             </div>
           </div>
@@ -221,3 +255,4 @@ export default function ArchitectureModal({ isOpen, onClose }) {
     </div>
   );
 }
+
