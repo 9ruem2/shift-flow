@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { UserCheck, ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
+import CustomDatePicker from "./CustomDatePicker";
 
 const FALLBACK_DRIVERS = [
   { name: "이미복", id: "wlfjddp1" },
@@ -37,6 +38,7 @@ export default function DriverSubstitutionPanel({
     fetchDrivers();
   }, []);
 
+  // 현재 선택된 월에 포함된 모든 날짜 목록 (YYYY-MM-DD) 추출
   const availableDates = React.useMemo(() => {
     const dateSet = new Set();
     calendarWeeks.forEach((w) => {
@@ -49,8 +51,6 @@ export default function DriverSubstitutionPanel({
 
   const handleAddRow = () => {
     const defaultDate = availableDates.length > 0 ? availableDates[0] : "";
-    const defaultDriver =
-      drivers.length > 0 ? drivers[0] : { name: "", id: "" };
 
     setSubstitutions((prev) => [
       ...prev,
@@ -58,8 +58,8 @@ export default function DriverSubstitutionPanel({
         key: Date.now() + Math.random(),
         targetDate: defaultDate,
         originalDriverName: "",
-        newDriverName: defaultDriver.name,
-        newDriverId: defaultDriver.id,
+        newDriverName: "", // '기사 선택' 기본값
+        newDriverId: "",
       },
     ]);
     if (!isOpen) setIsOpen(true);
@@ -100,7 +100,7 @@ export default function DriverSubstitutionPanel({
       className="glass-panel"
       style={{
         marginBottom: "20px",
-        overflow: "hidden",
+        overflow: "visible", // 달력 팝오버를 위해 visible 처리
         border:
           activeCount > 0
             ? "1px solid rgba(168, 85, 247, 0.4)"
@@ -159,7 +159,11 @@ export default function DriverSubstitutionPanel({
       {/* Body */}
       {isOpen && (
         <div
-          style={{ padding: "16px 18px", background: "rgba(15, 23, 42, 0.4)" }}
+          style={{
+            padding: "16px 18px",
+            background: "rgba(15, 23, 42, 0.4)",
+            overflow: "visible",
+          }}
         >
           {substitutions.length === 0 ? (
             <div
@@ -191,19 +195,24 @@ export default function DriverSubstitutionPanel({
                 }}
               >
                 <Plus size={13} />
-                <span>추가</span>
+                <span>항목 추가</span>
               </button>
             </div>
           ) : (
             <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                overflow: "visible",
+              }}
             >
               {/* Table Column Labels */}
               <div
                 style={{
                   display: "grid",
                   gridTemplateColumns:
-                    "minmax(130px, 1.2fr) minmax(120px, 1fr) minmax(180px, 1.4fr) 36px",
+                    "minmax(150px, 1.3fr) minmax(110px, 1fr) minmax(160px, 1.3fr) 36px",
                   gap: "8px",
                   padding: "0 4px",
                   fontSize: "0.72rem",
@@ -211,7 +220,7 @@ export default function DriverSubstitutionPanel({
                   color: "var(--text-muted)",
                 }}
               >
-                <div>업무일</div>
+                <div>업무일 (달력 선택)</div>
                 <div>기존 기사명</div>
                 <div>변경할 용차 기사</div>
                 <div style={{ textAlign: "center" }}>삭제</div>
@@ -223,71 +232,26 @@ export default function DriverSubstitutionPanel({
                   style={{
                     display: "grid",
                     gridTemplateColumns:
-                      "minmax(130px, 1.2fr) minmax(120px, 1fr) minmax(180px, 1.4fr) 36px",
+                      "minmax(150px, 1.3fr) minmax(110px, 1fr) minmax(160px, 1.3fr) 36px",
                     gap: "8px",
                     alignItems: "center",
                     background: "rgba(15, 23, 42, 0.8)",
                     border: "1px solid var(--border-subtle)",
                     borderRadius: "var(--radius-sm)",
                     padding: "8px 10px",
+                    overflow: "visible",
+                    position: "relative",
                   }}
                 >
-                  {/* 업무일 */}
+                  {/* 업무일 (커스텀 숫자월 달력 피커) */}
                   <div>
-                    {availableDates.length > 0 ? (
-                      <select
-                        value={sub.targetDate}
-                        onChange={(e) =>
-                          handleUpdateRow(sub.key, "targetDate", e.target.value)
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "6px 8px",
-                          background: "rgba(30, 41, 59, 0.8)",
-                          border: "1px solid var(--border-subtle)",
-                          borderRadius: "4px",
-                          color: "#FFFFFF",
-                          fontSize: "0.8rem",
-                          fontFamily: "var(--font-mono)",
-                        }}
-                      >
-                        {availableDates.map((d) => {
-                          const [y, m, day] = d.split('-');
-                          const dateObj = new Date(Number(y), Number(m) - 1, Number(day));
-                          const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-                          const dayName = dayNames[dateObj.getDay()];
-                          const displayLabel = `${y}.${m}.${day} (${dayName})`;
-                          return (
-                            <option
-                              key={d}
-                              value={d}
-                              style={{ background: "#0F172A", color: "#FFF" }}
-                            >
-                              {displayLabel}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        placeholder="YYYY-MM-DD"
-                        value={sub.targetDate}
-                        onChange={(e) =>
-                          handleUpdateRow(sub.key, "targetDate", e.target.value)
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "5px 8px",
-                          background: "rgba(30, 41, 59, 0.8)",
-                          border: "1px solid var(--border-subtle)",
-                          borderRadius: "4px",
-                          color: "#FFFFFF",
-                          fontSize: "0.8rem",
-                          fontFamily: "var(--font-mono)"
-                        }}
-                      />
-                    )}
+                    <CustomDatePicker
+                      value={sub.targetDate}
+                      onChange={(dateStr) =>
+                        handleUpdateRow(sub.key, "targetDate", dateStr)
+                      }
+                      placeholder="날짜 선택"
+                    />
                   </div>
 
                   {/* 기존 기사명 */}
@@ -315,14 +279,8 @@ export default function DriverSubstitutionPanel({
                     />
                   </div>
 
-                  {/* 용차 기사 선택 */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
+                  {/* 용차 기사 선택 (초기: '기사 선택') */}
+                  <div>
                     <select
                       value={sub.newDriverName}
                       onChange={(e) =>
@@ -333,16 +291,27 @@ export default function DriverSubstitutionPanel({
                         )
                       }
                       style={{
-                        flex: 1,
+                        width: "100%",
                         padding: "6px 8px",
                         background: "rgba(30, 41, 59, 0.8)",
                         border: "1px solid var(--border-subtle)",
                         borderRadius: "4px",
-                        color: "#FFFFFF",
+                        color: sub.newDriverName
+                          ? "#FFFFFF"
+                          : "var(--text-muted)",
                         fontSize: "0.8rem",
-                        fontWeight: 600,
+                        fontWeight: sub.newDriverName ? 600 : 400,
                       }}
                     >
+                      <option
+                        value=""
+                        style={{
+                          background: "#0F172A",
+                          color: "var(--text-muted)",
+                        }}
+                      >
+                        기사 선택
+                      </option>
                       {drivers.map((d) => (
                         <option
                           key={d.name}
