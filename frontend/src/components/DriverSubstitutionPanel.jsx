@@ -251,19 +251,27 @@ export default function DriverSubstitutionPanel({
                           fontFamily: "var(--font-mono)",
                         }}
                       >
-                        {availableDates.map((d) => (
-                          <option
-                            key={d}
-                            value={d}
-                            style={{ background: "#0F172A", color: "#FFF" }}
-                          >
-                            {d}
-                          </option>
-                        ))}
+                        {availableDates.map((d) => {
+                          const [y, m, day] = d.split('-');
+                          const dateObj = new Date(Number(y), Number(m) - 1, Number(day));
+                          const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+                          const dayName = dayNames[dateObj.getDay()];
+                          const displayLabel = `${y}.${m}.${day} (${dayName})`;
+                          return (
+                            <option
+                              key={d}
+                              value={d}
+                              style={{ background: "#0F172A", color: "#FFF" }}
+                            >
+                              {displayLabel}
+                            </option>
+                          );
+                        })}
                       </select>
                     ) : (
                       <input
-                        type="date"
+                        type="text"
+                        placeholder="YYYY-MM-DD"
                         value={sub.targetDate}
                         onChange={(e) =>
                           handleUpdateRow(sub.key, "targetDate", e.target.value)
@@ -276,6 +284,7 @@ export default function DriverSubstitutionPanel({
                           borderRadius: "4px",
                           color: "#FFFFFF",
                           fontSize: "0.8rem",
+                          fontFamily: "var(--font-mono)"
                         }}
                       />
                     )}
