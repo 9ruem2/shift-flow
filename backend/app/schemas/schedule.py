@@ -7,13 +7,17 @@ class ContractDriver(BaseModel):
 
 class DriverSubstitutionRule(BaseModel):
     target_date: str                 # YYYY-MM-DD
-    original_driver_name: str        # 기존 기사명
+    camp: Optional[str] = None       # 캠프명 (예: "구리2")
+    route: Optional[str] = None      # 라우트 (예: "905C,905D")
+    original_driver_name: Optional[str] = None # 기존 기사명 (호환용)
     new_driver_name: str             # 바꿀 용차 기사명
     new_driver_id: Optional[str] = None # 용차 기사 ID (생략 시 마스터에서 자동 조회)
 
 class SubstitutionRecord(BaseModel):
     target_date: str
-    original_driver_name: str
+    camp: Optional[str] = None
+    route: Optional[str] = None
+    original_driver_name: Optional[str] = None
     new_driver_name: str
     new_driver_id: str
     row_index: int

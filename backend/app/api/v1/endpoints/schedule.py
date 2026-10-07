@@ -22,7 +22,7 @@ from app.schemas.schedule import (
     SubstitutionRecord
 )
 from app.services.week_calculator import WeekCalculator
-from app.services.excel_shifter import ExcelShifter, load_contract_drivers_map
+from app.services.excel_shifter import ExcelShifter, load_contract_drivers_map, load_camp_routes_map
 from app.services.validator import ScheduleValidator
 
 router = APIRouter()
@@ -48,6 +48,11 @@ async def get_contract_drivers():
     drivers_map = load_contract_drivers_map()
     return [ContractDriver(name=name, id=driver_id) for name, driver_id in drivers_map.items()]
 
+@router.get("/camp-routes", response_model=Dict[str, List[str]])
+async def get_camp_routes():
+    """캠프별 라우트 마스터 목록 반환 (정적 JSON 기반)"""
+    return load_camp_routes_map()
+
 @router.get("/weeks", response_model=MonthWeeksResponse)
 async def get_month_weeks(
     year: int = Query(..., description="조회 연도 (예: 2026)"),
@@ -69,7 +74,7 @@ async def transform_schedules(
 ):
     """
     1. 업무일 1:1 치환
-    2. [옵셔널] 업무일 및 기존 기사명 기준 용차 기사명 및 ID 치환
+    2. [옵셔널] 캠프/라우트 및 날짜 기준 용차 기사명 및 ID 치환
     3. pandas 기반 3중 + 용차 치환 무결성 검증
     """
     if not files or len(files) == 0:
@@ -82,7 +87,12 @@ async def transform_schedules(
             sub_raw = json.loads(substitutions)
             if isinstance(sub_raw, list):
                 for item in sub_raw:
-                    if isinstance(item, dict) and item.get("target_date") and item.get("original_driver_name") and item.get("new_driver_name"):
+                    if (
+                        isinstance(item, dict)
+                        and item.get("target_date")
+                        and item.get("new_driver_name")
+                        and (item.get("route") or item.get("camp") or item.get("original_driver_name"))
+                    ):
                         parsed_substitution_rules.append(DriverSubstitutionRule(**item))
         except Exception as e:
             print(f"Warning: Failed to parse substitutions JSON: {e}")

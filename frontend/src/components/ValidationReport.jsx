@@ -295,14 +295,43 @@ export default function ValidationReport({ reportData }) {
                         gap: '4px'
                       }}>
                         {substitution_records.map((sub, sIdx) => (
-                          <div key={sIdx} style={{ fontSize: '0.78rem', color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div key={sIdx} style={{ fontSize: '0.78rem', color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                             <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
                               행 #{sub.row_index}
                             </span>
                             <span style={{ color: '#93C5FD', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
                               [{sub.target_date}]
                             </span>
-                            <span style={{ color: 'var(--text-secondary)' }}>{sub.original_driver_name}</span>
+                            {sub.camp && (
+                              <span style={{
+                                fontSize: '0.7rem',
+                                background: 'rgba(59, 130, 246, 0.18)',
+                                border: '1px solid rgba(59, 130, 246, 0.4)',
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                                color: '#93C5FD',
+                                fontWeight: 600
+                              }}>
+                                {sub.camp}
+                              </span>
+                            )}
+                            {sub.route && (
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontFamily: 'var(--font-mono)',
+                                background: 'rgba(168, 85, 247, 0.18)',
+                                border: '1px solid rgba(168, 85, 247, 0.4)',
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                                color: '#E9D5FF',
+                                fontWeight: 600
+                              }}>
+                                {sub.route}
+                              </span>
+                            )}
+                            {sub.original_driver_name && (
+                              <span style={{ color: 'var(--text-secondary)' }}>({sub.original_driver_name})</span>
+                            )}
                             <span style={{ color: 'var(--accent-primary-light)' }}>→</span>
                             <span style={{ color: '#F472B6', fontWeight: 700 }}>{sub.new_driver_name}</span>
                             <span style={{

@@ -157,7 +157,7 @@ export default function ArchitectureModal({ isOpen, onClose }) {
                   • <b>1단계(업무일 우선 치환):</b> '업무일' 컬럼을 탐색하여 동일 요일의 대상 날짜로 1:1 치환합니다.
                 </p>
                 <p style={{ margin: '0 0 3px 0' }}>
-                  • <b>2단계(용차 기사 &amp; ID 치환):</b> 변경된 새 업무일 기준 기존 기사명을 찾아 용차 기사명 및 정적 마스터(<code>contract_drivers.json</code>)의 고유 ID로 치환합니다.
+                  • <b>2단계(용차 기사 &amp; ID 치환):</b> 변경된 새 업무일 기준 캠프/라우트(또는 기사명)를 찾아 용차 기사명 및 정적 마스터(<code>contract_drivers.json</code>)의 고유 ID로 치환합니다.
                 </p>
                 <p style={{ margin: 0, color: 'var(--accent-emerald)' }}>
                   ✓ 셀 폰트, 배경색, 테두리, 수식, 행 높이, 열 너비, 빈 셀 서식 100% 보존

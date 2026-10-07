@@ -58,12 +58,14 @@ export default function App() {
         formData.append('selected_weeks', w);
       });
 
-      // 유효한 용차 기사 교체 규칙만 필터링하여 전송
+      // 유효한 용차 기사 교체 규칙만 필터링하여 전송 (날짜 + 캠프/라우트 + 용차 기사)
       const validSubstitutions = substitutions
-        .filter(s => s.targetDate && s.originalDriverName.trim() && s.newDriverName)
+        .filter(s => s.targetDate && s.newDriverName && (s.route || s.camp || (s.originalDriverName && s.originalDriverName.trim())))
         .map(s => ({
           target_date: s.targetDate.trim(),
-          original_driver_name: s.originalDriverName.trim(),
+          camp: s.camp ? s.camp.trim() : null,
+          route: s.route ? s.route.trim() : null,
+          original_driver_name: s.originalDriverName ? s.originalDriverName.trim() : null,
           new_driver_name: s.newDriverName.trim(),
           new_driver_id: s.newDriverId ? s.newDriverId.trim() : null
         }));
@@ -133,6 +135,7 @@ export default function App() {
           setCalendarWeeks={setCalendarWeeks}
           selectedWeeks={selectedWeeks}
           setSelectedWeeks={setSelectedWeeks}
+          hasBothFiles={Boolean(evenFile && oddFile)}
         />
 
         {/* 3. [옵셔널] 용차 기사 교체 설정 패널 (접었다 폈다 가능) */}
@@ -152,7 +155,9 @@ export default function App() {
             marginBottom: '20px',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px'
+            gap: '10px',
+            position: 'relative',
+            zIndex: 1
           }}>
             <AlertCircle size={18} color="#FB7185" />
             <span style={{ fontSize: '0.85rem', color: '#FECDD3' }}>{errorMsg}</span>
@@ -165,12 +170,14 @@ export default function App() {
           flexDirection: 'column',
           alignItems: 'center',
           gap: '12px',
-          margin: '8px 0 20px 0'
+          margin: '8px 0 20px 0',
+          position: 'relative',
+          zIndex: 1
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
               onClick={handleTransform}
-              disabled={isProcessing || (!evenFile && !oddFile)}
+              disabled={isProcessing || !evenFile || !oddFile || selectedWeeks.length === 0}
               className="btn-primary"
               style={{
                 padding: '13px 32px',
